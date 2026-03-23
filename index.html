@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root {
+  --bg:#0b0b0d; --s1:#141416; --s2:#1c1c1f; --s3:#232327;
+  --b1:rgba(255,255,255,0.06); --b2:rgba(255,255,255,0.11); --b3:rgba(255,255,255,0.18);
+  --text:#eeedf2; --muted:#7a7a88;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:1.4rem 1.5rem 1rem;border-bottom:1px solid var(--b1);max-width:720px;margin:0 auto}
+.logo{font-family:'DM Mono',monospace;font-size:14px;color:var(--muted);letter-spacing:.05em}
+.logo b{color:var(--text);font-weight:500}
+.today-chip{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:3px 12px}
+
+main{max-width:720px;margin:0 auto;padding:1.4rem 1.5rem 5rem}
+
+.week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem}
+.week-range{font-size:14px;font-weight:500}
+.nbtn{background:var(--s2);border:1px solid var(--b1);color:var(--muted);border-radius:7px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:border-color .15s,color .15s}
+.nbtn:hover{border-color:var(--b2);color:var(--text)}
+
+.sec-label{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:1.5rem 0 .6rem;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--b1)}
+.pill{border-radius:20px;padding:2px 9px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.03em}
+.pill-do{background:rgba(93,202,165,0.12);color:#5dcaa5;border:1px solid rgba(93,202,165,0.28)}
+.pill-avoid{background:rgba(232,133,90,0.1);color:#e8855a;border:1px solid rgba(232,133,90,0.28)}
+
+.days-hd{display:grid;grid-template-columns:170px repeat(7,1fr);gap:4px;margin-bottom:4px;padding:0 2px}
+.dcol{text-align:center;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;line-height:1.5}
+.dcol.is-today{color:var(--text);font-weight:500}
+.dcol .dnum{font-size:13px;display:block}
+
+.habit-row{display:grid;grid-template-columns:170px repeat(7,1fr);gap:4px;align-items:center;padding:3px 2px}
+.hmeta{display:flex;align-items:center;gap:8px;padding-right:6px;min-width:0}
+.hbar-accent{width:3px;border-radius:2px;height:30px;flex-shrink:0}
+.hnames{min-width:0}
+.hname{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.ccell{display:flex;align-items:center;justify-content:center}
+.cbtn{width:28px;height:28px;border-radius:6px;border:1px solid var(--b1);background:var(--s2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0}
+.cbtn:hover:not(.future){border-color:var(--b2);background:var(--s3)}
+.cbtn .tick{font-size:13px;opacity:0;transform:scale(.5);transition:all .13s;line-height:1}
+.cbtn.done .tick{opacity:1;transform:scale(1)}
+.cbtn.future{opacity:.18;pointer-events:none}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:2rem}
+.scard{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:.9rem 1rem}
+.slabel{font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px}
+.sval{font-size:24px;font-weight:600;line-height:1}
+.ssub{font-size:11px;color:var(--muted);margin-top:3px}
+
+.sm-title{font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:2rem 0 .8rem}
+.hbars{display:flex;flex-direction:column;gap:9px}
+.hbar-row{display:flex;align-items:center;gap:10px}
+.hbar-name{font-size:12px;color:var(--text);width:140px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.fill{height:100%;border-radius:3px;transition:width .4s}
+.hbar-pct{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);width:34px;text-align:right}
+
+.heatmap-wrap{margin-top:2rem}
+.hm-grid{display:flex;gap:3px;overflow-x:auto;padding-bottom:4px}
+.hm-col{display:flex;flex-direction:column;gap:3px}
+.hm-cell{width:13px;height:13px;border-radius:2px}
+
+@media(max-width:540px){
+  .days-hd,.habit-row{grid-template-columns:100px repeat(7,1fr)}
+  .hname{font-size:12px} .hsub{display:none}
+  .cbtn{width:24px;height:24px} .cbtn .tick{font-size:11px}
+  header,main{padding-left:1rem;padding-right:1rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">habit<b>.</b>track</div>
+  <div class="today-chip" id="today-chip"></div>
+</header>
+
+<main>
+  <div class="week-nav">
+    <button class="nbtn" id="prev">&#8592;</button>
+    <div class="week-range" id="week-range"></div>
+    <button class="nbtn" id="next">&#8594;</button>
+  </div>
+
+  <div class="days-hd" id="days-hd"></div>
+  <div id="grid"></div>
+
+  <div class="stats-row">
+    <div class="scard">
+      <div class="slabel">Cette semaine</div>
+      <div class="sval" id="sw-val">—</div>
+      <div class="ssub" id="sw-sub"></div>
+    </div>
+    <div class="scard">
+      <div class="slabel">Série parfaite</div>
+      <div class="sval" id="streak-val">0</div>
+      <div class="ssub">jours consécutifs</div>
+    </div>
+    <div class="scard">
+      <div class="slabel">Ce mois</div>
+      <div class="sval" id="sm-val">—</div>
+      <div class="ssub" id="sm-sub"></div>
+    </div>
+  </div>
+
+  <div class="sm-title">30 derniers jours — par habitude</div>
+  <div class="hbars" id="hbars"></div>
+
+  <div class="heatmap-wrap">
+    <div class="sm-title">Historique 16 semaines</div>
+    <div class="hm-grid" id="heatmap"></div>
+  </div>
+</main>
+
+<script>
+const HABITS = [
+  {id:'pompes', name:'100 pompes',      sub:'par jour',       color:'#7f77dd', type:'do'},
+  {id:'gainage',name:'Gainage',         sub:'5 min',          color:'#5dcaa5', type:'do'},
+  {id:'running',name:'Running',         sub:'séance',         color:'#ef9f27', type:'do'},
+  {id:'epaule', name:'Épaules',         sub:'séance',         color:'#d4537e', type:'do'},
+  {id:'alcool', name:"Pas d'alcool",    sub:'0 verre',        color:'#e8855a', type:'avoid'},
+  {id:'soda',   name:'Pas de soda',     sub:'eau / thé ok',   color:'#e87b7b', type:'avoid'},
+  {id:'grigno', name:'Pas de fast food',sub:'& grignotage',   color:'#c97ae8', type:'avoid'},
+];
+
+const DAYS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+function toKey(d){return d.toISOString().slice(0,10)}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+function getMonday(d){const r=new Date(d);const w=r.getDay();r.setDate(r.getDate()+(w===0?-6:1-w));r.setHours(0,0,0,0);return r}
+function hexRgb(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)].join(',')}
+
+const today=new Date();today.setHours(0,0,0,0);
+let monday=getMonday(today);
+function load(){try{return JSON.parse(localStorage.getItem('ht3')||'{}')}catch{return{}}}
+function save(d){localStorage.setItem('ht3',JSON.stringify(d))}
+let data=load();
+
+function isDone(id,key){return!!(data[key]&&data[key][id])}
+function toggle(id,key){if(!data[key])data[key]={};data[key][id]=!data[key][id];save(data);render()}
+function isFuture(d){return d>today}
+
+function renderGrid(){
+  // header
+  const dh=document.getElementById('days-hd');
+  dh.innerHTML='<div></div>';
+  for(let i=0;i<7;i++){
+    const d=addDays(monday,i);
+    const isT=toKey(d)===toKey(today);
+    const el=document.createElement('div');
+    el.className='dcol'+(isT?' is-today':'');
+    el.innerHTML=`${DAYS[i].slice(0,3)}<span class="dnum">${d.getDate()}</span>`;
+    dh.appendChild(el);
+  }
+
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+
+  function secLabel(text,pillClass,pillText){
+    const el=document.createElement('div');
+    el.className='sec-label';
+    el.innerHTML=`${text} <span class="pill ${pillClass}">${pillText}</span>`;
+    return el;
+  }
+
+  grid.appendChild(secLabel('À faire','pill-do','actions'));
+  HABITS.filter(h=>h.type==='do').forEach(h=>grid.appendChild(makeRow(h)));
+  grid.appendChild(secLabel('À éviter','pill-avoid','discipline'));
+  HABITS.filter(h=>h.type==='avoid').forEach(h=>grid.appendChild(makeRow(h)));
+}
+
+function makeRow(habit){
+  const row=document.createElement('div');
+  row.className='habit-row';
+  const meta=document.createElement('div');
+  meta.className='hmeta';
+  meta.innerHTML=`<div class="hbar-accent" style="background:${habit.color}"></div>
+    <div class="hnames"><div class="hname">${habit.name}</div><div class="hsub">${habit.sub}</div></div>`;
+  row.appendChild(meta);
+
+  for(let i=0;i<7;i++){
+    const d=addDays(monday,i);
+    const key=toKey(d);
+    const future=isFuture(d);
+    const done=isDone(habit.id,key);
+    const cell=document.createElement('div');
+    cell.className='ccell';
+    const btn=document.createElement('button');
+    btn.className='cbtn'+(done?' done':'')+(future?' future':'');
+    const symbol=habit.type==='avoid'?'✕':'✓';
+    btn.innerHTML=`<span class="tick" style="color:${habit.color}">${symbol}</span>`;
+    if(done){
+      btn.style.background=`rgba(${hexRgb(habit.color)},0.12)`;
+      btn.style.borderColor=`rgba(${hexRgb(habit.color)},0.3)`;
+    }
+    if(!future) btn.addEventListener('click',()=>toggle(habit.id,key));
+    cell.appendChild(btn);
+    row.appendChild(cell);
+  }
+  return row;
+}
+
+function renderStats(){
+  let wd=0,wp=0;
+  for(let i=0;i<7;i++){
+    const d=addDays(monday,i);
+    if(!isFuture(d)){const key=toKey(d);wp+=HABITS.length;HABITS.forEach(h=>{if(isDone(h.id,key))wd++})}
+  }
+  document.getElementById('sw-val').textContent=wd;
+  document.getElementById('sw-sub').textContent=`/ ${wp} possibles`;
+
+  let best=0,cur=0;
+  const d0=new Date('2024-01-01');
+  while(d0<=today){
+    const key=toKey(d0);
+    if(HABITS.every(h=>isDone(h.id,key))){cur++;best=Math.max(best,cur)}else cur=0;
+    d0.setDate(d0.getDate()+1);
+  }
+  document.getElementById('streak-val').textContent=best;
+
+  const first=new Date(today.getFullYear(),today.getMonth(),1);
+  let md=0,mp=0;
+  const dm=new Date(first);
+  while(dm<=today){const key=toKey(dm);mp+=HABITS.length;HABITS.forEach(h=>{if(isDone(h.id,key))md++});dm.setDate(dm.getDate()+1)}
+  const pct=mp>0?Math.round(md/mp*100):0;
+  document.getElementById('sm-val').textContent=pct+'%';
+  document.getElementById('sm-sub').textContent=`${md} / ${mp} cochés`;
+
+  const hbars=document.getElementById('hbars');
+  hbars.innerHTML='';
+  const ago=new Date(today);ago.setDate(today.getDate()-29);
+  for(const h of HABITS){
+    let cnt=0;const d2=new Date(ago);
+    while(d2<=today){if(isDone(h.id,toKey(d2)))cnt++;d2.setDate(d2.getDate()+1)}
+    const p=Math.round(cnt/30*100);
+    const el=document.createElement('div');
+    el.className='hbar-row';
+    el.innerHTML=`<div class="hbar-name">${h.name}</div>
+      <div class="track"><div class="fill" style="width:${p}%;background:${h.color}"></div></div>
+      <div class="hbar-pct">${p}%</div>`;
+    hbars.appendChild(el);
+  }
+
+  const hm=document.getElementById('heatmap');
+  hm.innerHTML='';
+  const WEEKS=16;
+  const startMon=addDays(getMonday(today),-(WEEKS-1)*7);
+  for(let w=0;w<WEEKS;w++){
+    const col=document.createElement('div');
+    col.className='hm-col';
+    for(let d=0;d<7;d++){
+      const date=addDays(startMon,w*7+d);
+      const cell=document.createElement('div');
+      cell.className='hm-cell';
+      if(date>today){cell.style.background='var(--s2)';cell.style.opacity='.3'}
+      else{
+        const key=toKey(date);
+        const done=HABITS.filter(h=>isDone(h.id,key)).length;
+        const ratio=done/HABITS.length;
+        if(ratio===0) cell.style.background='var(--s3)';
+        else if(ratio<0.4) cell.style.background='rgba(93,202,165,0.2)';
+        else if(ratio<0.7) cell.style.background='rgba(93,202,165,0.45)';
+        else if(ratio<1)   cell.style.background='rgba(93,202,165,0.72)';
+        else               cell.style.background='#5dcaa5';
+        cell.title=`${date.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} — ${done}/${HABITS.length}`;
+      }
+      col.appendChild(cell);
+    }
+    hm.appendChild(col);
+  }
+}
+
+function render(){
+  document.getElementById('today-chip').textContent=
+    today.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long'});
+  const sun=addDays(monday,6);
+  document.getElementById('week-range').textContent=
+    monday.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' — '+
+    sun.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  renderGrid();
+  renderStats();
+}
+
+document.getElementById('prev').addEventListener('click',()=>{monday=addDays(monday,-7);render()});
+document.getElementById('next').addEventListener('click',()=>{monday=addDays(monday,7);render()});
+render();
+</script>
+</body>
+</html>
